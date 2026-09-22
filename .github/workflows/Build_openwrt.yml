@@ -64,8 +64,11 @@ jobs:
       env:
         CONFIG_FILE: '.config'
       run: |
-        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
-        chmod +x ./customize.sh && ./customize.sh
+        # 先把根目录的配置文件移动到 openwrt 内部（如果存在的话）
+        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/$CONFIG_FILE
+        # 进入 openwrt 目录执行脚本
+        cd openwrt
+        chmod +x ../customize.sh && ../customize.sh
        
     - name: Update & Install feeds
       working-directory: ./openwrt
