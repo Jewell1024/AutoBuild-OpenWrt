@@ -57,6 +57,13 @@ jobs:
         cd openwrt
         echo "src-git passwall_packages https://github.com/Openwrt-Passwall/openwrt-passwall-packages.git;main" >> ./feeds.conf.default
         echo "src-git passwall_luci https://github.com/Openwrt-Passwall/openwrt-passwall.git;main" >> ./feeds.conf.default
+
+    - name: Configuration Customization - Build_x86_64
+      env:
+        CONFIG_FILE: 'x86_64.config'
+      run: |
+        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+        chmod +x ./customize.sh && ./customize.sh
         
     - name: Update & Install feeds
       working-directory: ./openwrt
@@ -65,24 +72,10 @@ jobs:
         ./scripts/feeds install -a
         ./scripts/feeds install -a
 
-    #- name: Import external feeds - passwall
-    #  working-directory: ./openwrt
-    #  run: |
-    #    git clone https://github.com/xiaorouji/openwrt-passwall.git package/lienol
-    #    git clone "your_github_link" package/"your_folder_name"      
-
-    #- name: Import external feeds - JerryKuKu Argon
-    #  working-directory: ./openwrt
-    #  run: |
-    #    git clone -b 18.06 https://github.com/jerrykuku/luci-theme-argon.git package/luci-theme-argon-jerrykuku
-
-    - name: Configuration Customization - Build_x86_64
-      env:
-        CONFIG_FILE: 'x86_64.config'
+    - name: Make Defconfig
+      working-directory: ./openwrt
       run: |
-        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
-        chmod +x ./customize.sh && ./customize.sh
-        cd openwrt && make defconfig
+        make defconfig
         
     - name: Download package
       working-directory: ./openwrt
