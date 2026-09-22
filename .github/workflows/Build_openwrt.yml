@@ -54,11 +54,18 @@ jobs:
         
     - name: Clone source code
       env: 
-        REPO_URL: https://github.com/Jewell1024/openwrt-22.03.git
-        REPO_BRANCH: main
+        REPO_URL: https://github.com/Jewell1024/openwrt
+        REPO_BRANCH: openwrt-22.03
       run: |
-        git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
+        git clone --depth 1 $REPO_URL -b$REPO_BRANCH openwrt
         cd openwrt
+
+    - name: Configuration Customization
+      env:
+        CONFIG_FILE: '.config'
+      run: |
+        [ -e $CONFIG_FILE ] && mv$CONFIG_FILE openwrt/.config
+        chmod +x ./customize.sh && ./customize.sh
        
     - name: Update & Install feeds
       working-directory: ./openwrt
@@ -66,20 +73,12 @@ jobs:
         ./scripts/feeds update -a
         ./scripts/feeds install -a
         ./scripts/feeds install -a
-        
-    #- name: Import external feeds - JerryKuKu Argon
-    #  working-directory: ./openwrt
-    #  run: |
-    #    git clone -b 18.06 https://github.com/jerrykuku/luci-theme-argon.git package/luci-theme-argon-jerrykuku   
-  
-    - name: Configuration Customization
-      env:
-        CONFIG_FILE: '.config'
+
+    - name: Make Defconfig
+      working-directory: ./openwrt
       run: |
-        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
-        chmod +x ./customize.sh && ./customize.sh
-        cd openwrt && make defconfig
-        
+        make defconfig
+
     - name: Download package
       working-directory: ./openwrt
       run: |
@@ -95,13 +94,12 @@ jobs:
         
     - name: Get current date
       id: date
-      run: echo "BUILD_DATE=$(date +%Y%m%d-%H%M)" >> $GITHUB_ENV
+      run: echo "BUILD_DATE=$(date +\%Y\%m\%d-\%H\%M)" >> $GITHUB_ENV
 
     - name: Upload firmware to Release
       uses: softprops/action-gh-release@master
-     # if: github.event_name == 'workflow_dispatch' # 可以限制只有手动触发时才发布 Release，或者去掉这行
       with:
-        files: openwrt/bin/targets/*/*/*   # 根据你编译生成的固件具体路径调整通配符
+        files: openwrt/bin/targets/*/*/*
         name: OpenWrt 22.03 ${{ env.BUILD_DATE }}
         tag_name: v${{ env.BUILD_DATE }}
       env:
@@ -117,4 +115,3 @@ jobs:
           仓库: ${{ github.repository }}
           分支: ${{ github.ref_name }}
           触发人: ${{ github.actor }}
-        
