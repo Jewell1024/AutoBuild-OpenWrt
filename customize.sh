@@ -13,3 +13,7 @@
 
 #3. Replace with JerryKuKu’s Argon
 #rm openwrt/package/lean/luci-theme-argon -rf
+
+
+# 将官方 LuCI 仓库地址替换为你自己的仓库地址，保留后面的分支名称不变
+sed -i 's|https://git.openwrt.org/project/luci.git|https://github.com/Jewell1024/luci.git|g' feeds.conf.default
