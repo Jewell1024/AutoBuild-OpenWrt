@@ -57,29 +57,25 @@ jobs:
         REPO_URL: https://github.com/Jewell1024/openwrt
         REPO_BRANCH: v22.03.7
       run: |
-        git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
-        cd openwrt
+        git clone --depth 1 $REPO_URL -b$REPO_BRANCH openwrt
 
-    - name: Configuration Customization
-      env:
-        CONFIG_FILE: '.config'
-      run: |
-        # 先把根目录的配置文件移动到 openwrt 内部（如果存在的话）
-        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/$CONFIG_FILE
-        # 进入 openwrt 目录执行脚本
-       # cd openwrt
-       # chmod +x ../customize.sh && ../customize.sh
-       
     - name: Update & Install feeds
       working-directory: ./openwrt
       run: |
         # 替换官方 luci 为你自己的 luci 仓库及对应分支
         sed -i 's|src-git-full luci.*|src-git luci https://github.com/Jewell1024/luci.git;openwrt-22.03|g' feeds.conf.default
-       
+        
         ./scripts/feeds update -a
         ./scripts/feeds install -a
         ./scripts/feeds install -a
 
+    - name: Configuration Customization
+      env:
+        CONFIG_FILE: '.config'
+      run: |
+        # 【修改点】在 feeds 安装完成后，再将根目录的 .config 移动到 openwrt 内部
+        [ -e $CONFIG_FILE ] && mv$CONFIG_FILE openwrt/$CONFIG_FILE
+        
     - name: Make Defconfig
       working-directory: ./openwrt
       run: |
