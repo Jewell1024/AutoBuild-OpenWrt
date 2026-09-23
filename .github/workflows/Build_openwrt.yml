@@ -67,12 +67,15 @@ jobs:
         # 先把根目录的配置文件移动到 openwrt 内部（如果存在的话）
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/$CONFIG_FILE
         # 进入 openwrt 目录执行脚本
-        cd openwrt
-        chmod +x ../customize.sh && ../customize.sh
+       # cd openwrt
+       # chmod +x ../customize.sh && ../customize.sh
        
     - name: Update & Install feeds
       working-directory: ./openwrt
       run: |
+        # 替换官方 luci 为你自己的 luci 仓库及对应分支
+        sed -i 's|src-git-full luci.*|src-git luci https://github.com/Jewell1024/luci.git;openwrt-22.03|g' feeds.conf.default
+       
         ./scripts/feeds update -a
         ./scripts/feeds install -a
         ./scripts/feeds install -a
