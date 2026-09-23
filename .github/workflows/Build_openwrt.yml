@@ -55,7 +55,7 @@ jobs:
     - name: Clone source code
       env: 
         REPO_URL: https://github.com/Jewell1024/openwrt
-        REPO_BRANCH: openwrt-22.03
+        REPO_BRANCH: v22.03.7
       run: |
         git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
         cd openwrt
@@ -103,8 +103,8 @@ jobs:
       uses: softprops/action-gh-release@master
       with:
         files: openwrt/bin/targets/*/*/*
-        name: OpenWrt 22.03 ${{ env.BUILD_DATE }}
-        tag_name: v${{ env.BUILD_DATE }}
+        name: OpenWrt 22.03.7 ${{ env.BUILD_DATE }}
+        tag_name: 22.03.7-v${{ env.BUILD_DATE }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
