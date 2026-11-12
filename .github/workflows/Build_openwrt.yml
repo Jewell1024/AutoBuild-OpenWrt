@@ -20,38 +20,60 @@ jobs:
       BUILD_DATE: ""
 
     steps:
+    - name: Maximize build disk space
+      uses: easimon/maximize-build-space@master
+      with:
+          root-reserve-mb: 512
+          swap-size-mb: 1024
+          remove-dotnet: 'true'
+          remove-android: 'true'
+          remove-haskell: 'true'
+          remove-codeql: 'true'
+     
     - name: Checkout
       uses: actions/checkout@master
 
     - name: Initialization environment
       env:
-        DEBIAN_FRONTEND: noninteractive
+          DEBIAN_FRONTEND: noninteractive
       run: |
-        set +e
-        docker rmi `docker images -q`
-        echo "Deleting files, please wait ..."
-        sudo rm -rf \
-          /usr/share/dotnet \
-          /etc/mysql \
-          /etc/php
-        sudo -E apt-get -y purge \
-          azure-cli \
-          ghc* \
-          zulu* \
-          hhvm \
-          llvm* \
-          firefox \
-          google* \
-          dotnet* \
-          powershell \
-          openjdk* \
-          mysql* \
-          php*
-        sudo -E apt-get update
-        sudo -E apt-get -y install ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache clang-18 cmake cpio curl device-tree-compiler flex gawk gcc-multilib g++-multilib gettext genisoimage git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libfuse-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libpython3-dev libreadline-dev libssl-dev libtool llvm-18 lrzsz msmtp ninja-build p7zip p7zip-full patch pkgconf python3 python3-pyelftools python3-setuptools qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev
-        sudo -E apt-get -y autoremove --purge
-        sudo -E apt-get clean
+          set +e
+          echo "=== 檢查當前磁碟空間 ==="
+          df -h
+          
+          echo "Deleting files, please wait ..."
+          # 刪除佔空間的大型預裝軟體
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ails
+          sudo rm -rf /opt/az
+          
+          sudo -E apt-get -y purge \
+            azure-cli \
+            ghc* \
+            zulu* \
+            hhvm \
+            llvm* \
+            firefox \
+            google* \
+            dotnet* \
+            powershell \
+            openjdk* \
+            mysql* \
+            php* \
+            android-sdk*
+            
+          sudo -E apt-get update
+          sudo -E apt-get -y install ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache clang-18 cmake cpio curl device-tree-compiler flex gawk gcc-multilib g++-multilib gettext genisoimage git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libfuse-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libpython3-dev libreadline-dev libssl-dev libtool llvm-18 lrzsz msmtp ninja-build p7zip p7zip-full patch pkgconf python3 python3-pyelftools python3-setuptools qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev
+          sudo -E apt-get -y autoremove --purge
+          sudo -E apt-get clean
         
+          echo "=== 清除後的磁碟空間 ==="
+          df -h 
+
     - name: Clone source code
       env: 
         REPO_URL: https://github.com/Jewell1024/openwrt
@@ -63,7 +85,7 @@ jobs:
       working-directory: ./openwrt
       run: |
         # 替换官方 luci 为你自己的 luci 仓库及对应分支
-        sed -i 's|src-git-full luci.*|src-git luci https://github.com/Jewell1024/luci.git;openwrt-22.03|g' feeds.conf.default
+        sed -i 's|src-git luci.*|src-git luci https://github.com/Jewell1024/luci.git;openwrt-22.03|g' feeds.conf.default
         
         ./scripts/feeds update -a
         ./scripts/feeds install -a
@@ -74,7 +96,7 @@ jobs:
         CONFIG_FILE: '.config'
       run: |
         # 【修改点】在 feeds 安装完成后，再将根目录的 .config 移动到 openwrt 内部
-        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/$CONFIG_FILE
+        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
         
     - name: Make Defconfig
       working-directory: ./openwrt
@@ -113,7 +135,7 @@ jobs:
         to: ${{ secrets.TELEGRAM_TO }}
         token: ${{ secrets.TELEGRAM_TOKEN }}
         message: |
-          🎉 OpenWrt 22.03 固件编译成功！
+          🎉 OpenWrt 22.03.7 固件编译成功！
           仓库: ${{ github.repository }}
           分支: ${{ github.ref_name }}
           触发人: ${{ github.actor }}
